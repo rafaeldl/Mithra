@@ -8,7 +8,10 @@ def gera_individuo(turma)
       individuo[dia][periodo] = @disciplinas.sample
     end
   end
-  {individuo: individuo, acertos: calcula_acertos(individuo, turma), turma: turma}
+  acertos = calcula_acertos(individuo, turma)
+  individuo = {individuo: individuo, acertos: acertos, turma: turma}
+  @melhor_individuo = individuo if @melhor_individuo.nil? || acertos > @melhor_individuo[:acertos]
+  individuo
 end
 
 def calcula_acertos(individuo, turma)
@@ -33,7 +36,10 @@ def cruzamento(x, y)
       individuo[dia][periodo] = if rand(1) == 1 then x[:individuo][dia][periodo] else y[:individuo][dia][periodo] end
     end
   end
-  {individuo: individuo, acertos: calcula_acertos(individuo, x[:turma]), turma: x[:turma]}
+  acertos = calcula_acertos(individuo, x[:turma])
+  individuo = {individuo: individuo, acertos: acertos, turma: x[:turma]}
+  @melhor_individuo = individuo if @melhor_individuo.nil? || (acertos > @melhor_individuo[:acertos])
+  individuo
 end
 
 def nova_geracao(geracao)
@@ -42,7 +48,7 @@ def nova_geracao(geracao)
   if geracao.empty?
     # Primeira geracao
     @turmas.each do |turma, disciplinas|
-      2.times do
+      5000.times do
         nova_geracao << gera_individuo(turma)
       end
     end
@@ -59,6 +65,8 @@ end
 @disciplinas = YAML.load_file('modelos/disciplinas.yml')
 @individuos = []
 @metas = {}
+@melhor_individuo
+
 geracao = []
 
 # Calcula o valor maximo de acertos
@@ -71,19 +79,18 @@ end
 @individuos << geracao
 
 melhor_individuo = nil
-1000.times do
+10.times do |i|
   geracao = nova_geracao(geracao)
-  geracao.each do |individuo|
-    melhor_individuo = individuo if melhor_individuo.nil? || individuo[:acertos] > melhor_individuo[:acertos]
-  end
+
+  puts "Geracao #{i} - tamanho #{geracao.size} - melhor #{@melhor_individuo[:acertos]}"
 
   @individuos << geracao
 
-  break if melhor_individuo[:acertos] == @metas[melhor_individuo[:turma]]
+  break if @melhor_individuo && (@melhor_individuo[:acertos] == @metas[@melhor_individuo[:turma]])
 end
 
 
-puts melhor_individuo[:acertos]
-puts melhor_individuo
+puts @melhor_individuo[:acertos]
+puts @melhor_individuo
 
 
